@@ -5,9 +5,10 @@ module Counting
   ) where
 
 import           Control.Arrow       (first, second)
-import           Control.Monad.State (MonadState (..), State, execState, modify,
-                                      when)
+import           Control.Monad.State (State, execState, gets, modify, when)
 import           Data.Functor        ((<&>))
+import           Data.List           (nub)
+import           Data.Maybe          (mapMaybe)
 import           Data.Set            (Set)
 import qualified Data.Set            as Set
 
@@ -19,7 +20,16 @@ data Color
 type Coord = (Int, Int)
 
 territories :: [String] -> [(Set Coord, Maybe Color)]
-territories board = error "You need to implement this function."
+territories board =
+  let m = length board
+      n = length (head board)
+      unoccupied =
+        [ (j + 1, i + 1)
+        | i <- [0 .. m - 1]
+        , j <- [0 .. n - 1]
+        , board !! i !! j == ' '
+        ]
+   in nub $ mapMaybe (territoryFor board) unoccupied
 
 territoryFor :: [String] -> Coord -> Maybe (Set Coord, Maybe Color)
 territoryFor board (i, j) =
@@ -43,7 +53,7 @@ territoryFor board (i, j) =
     visit :: (Int, Int) -> State (Set Coord, Set Coord) ()
     visit (i', j') = do
       modify $ first $ Set.insert (i', j')
-      (ts, _) <- get
+      ts <- gets fst
       let neighbors =
             [ p
             | p@(i'', j'') <-
